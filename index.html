@@ -124,17 +124,19 @@
         .btn-container {
             grid-column: 1 / -1;
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             margin-top: 5px;
         }
 
         .btn {
             flex: 1;
+            min-width: 130px;
             padding: 12px 15px;
             border: none;
             border-radius: 8px;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -152,6 +154,12 @@
         .btn-secondary {
             background: #27272a;
             color: #f4f4f5;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
 
         .status-msg {
@@ -175,7 +183,6 @@
             display: block;
         }
 
-        /* FIXED PRINT CSS: Perfectly fits the canvas on print previews without disappearing */
         @media print {
             body * {
                 visibility: hidden;
@@ -199,7 +206,7 @@
 
     <div class="header-title">
         <h1>🍥 সাাকুরা মার্কেট - নিনজা ব্যাংক নোট</h1>
-        <p>অটো গুগল শিট সিঙ্ক ও থার্মাল কার্ড প্রিন্টার সিস্টেম</p>
+        <p>জাপানি ফেস-এফ স্টাইল ও অটো গুগল শিট সিঙ্ক সিস্টেম</p>
     </div>
 
     <div class="container">
@@ -242,6 +249,7 @@
 
             <div class="btn-container">
                 <button class="btn btn-secondary" onclick="generateNewSerial()">নতুন সিরিয়াল</button>
+                <button class="btn btn-download" onclick="downloadCanvasAsPNG()">📥 PNG ডাউনলোড</button>
                 <button class="btn btn-primary" onclick="syncAndPrintExactNote()">শিটে সেভ ও কার্ড প্রিন্ট</button>
             </div>
         </div>
@@ -423,6 +431,7 @@
             ctx.fillText('REDEEMED STAMP BOX', 522, 255);
             ctx.font = '12px "Segoe UI", sans-serif';
             ctx.fillStyle = '#57534e';
+            ctx.fillText('(এখানে আপনার সিল দিন)', 522, 288);
             ctx.restore();
 
             ctx.fillStyle = '#ea580c';
@@ -516,6 +525,22 @@
             ctx.arc(x, y, 5, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
+        }
+
+        // DOWNLOAD CANVAS AS PNG FUNCTION
+        function downloadCanvasAsPNG() {
+            const imageURI = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            const serialName = serialInput.value.replace(/\s+/g, '_');
+            link.download = `Sakura_Ninja_Note_${serialName}.png`;
+            link.href = imageURI;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            statusMsg.className = 'status-msg status-success';
+            statusMsg.innerText = 'গ্যালারিতে নিনজা নোট PNG ডাউনলোড হয়েছে!';
+            setTimeout(() => { statusMsg.style.display = 'none'; }, 3000);
         }
 
         async function syncAndPrintExactNote() {
