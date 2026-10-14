@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>সাাকুরা মার্কেট - নিনজা ব্যাংক নোট জেনারেটর</title>
+    <style>
+        :root {
+            --primary-bg: #09090b;
+            --panel-bg: #18181b;
+            --accent-orange: #ea580c;
+            --text-light: #f4f4f5;
+            --border-color: #27272a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .header-title {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .header-title h1 {
+            color: var(--accent-orange);
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+
+        .header-title p {
+            color: #a1a1aa;
+            font-size: 13px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 600px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .preview-card {
+            background: var(--panel-bg);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: auto;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        .form-card {
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            color: #d4d4d8;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            background: #09090b;
+            border: 1px solid #3f3f46;
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent-orange);
+        }
+
+        .form-group input[readonly] {
+            color: #a1a1aa;
+            background: #18181b;
+        }
+
+        .btn-container {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ea580c, #c2410c);
+            color: white;
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+        }
+
+        .btn-secondary {
+            background: #27272a;
+            color: #f4f4f5;
+        }
+
+        .status-msg {
+            grid-column: 1 / -1;
+            font-size: 12px;
+            text-align: center;
+            padding: 8px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .status-success {
+            background: #064e3b;
+            color: #34d399;
+            display: block;
+        }
+
+        .status-loading {
+            background: #1e3a8a;
+            color: #93c5fd;
+            display: block;
+        }
+
+        /* FIXED PRINT CSS: Perfectly fits the canvas on print previews without disappearing */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #voucherCanvas, #voucherCanvas * {
+                visibility: visible;
+            }
+            #voucherCanvas {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100% !important;
+                height: auto !important;
+                max-height: 100vh;
+                object-fit: contain;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-title">
+        <h1>🍥 সাাকুরা মার্কেট - নিনজা ব্যাংক নোট</h1>
+        <p>অটো গুগল শিট সিঙ্ক ও থার্মাল কার্ড প্রিন্টার সিস্টেম</p>
+    </div>
+
+    <div class="container">
+        <div class="preview-card">
+            <canvas id="voucherCanvas" width="1280" height="620"></canvas>
+        </div>
+
+        <div class="form-card">
+            <div class="form-group">
+                <label>টাকা পরিমাণ (Amount in ৳)</label>
+                <input type="number" id="amountInput" value="120">
+            </div>
+
+            <div class="form-group">
+                <label>সিরিয়াল আইডি</label>
+                <input type="text" id="serialInput" value="AM279006LG" readonly>
+            </div>
+
+            <div class="form-group full-width">
+                <label>গ্রাহকের নাম (Customer Name)</label>
+                <input type="text" id="nameInput" value="Arnab Deb">
+            </div>
+
+            <div class="form-group">
+                <label>ইস্যু তারিখ</label>
+                <input type="text" id="issueDateInput" readonly>
+            </div>
+
+            <div class="form-group">
+                <label>মেয়াদ (Expiry +7 Days)</label>
+                <input type="text" id="expiryDateInput" readonly>
+            </div>
+
+            <div class="form-group full-width">
+                <label>চরিত্রের পোর্ট্রেট ছবি পরিবর্তন (ঐচ্ছিক)</label>
+                <input type="file" id="imageUpload" accept="image/*">
+            </div>
+
+            <div id="statusMsg" class="status-msg"></div>
+
+            <div class="btn-container">
+                <button class="btn btn-secondary" onclick="generateNewSerial()">নতুন সিরিয়াল</button>
+                <button class="btn btn-primary" onclick="syncAndPrintExactNote()">শিটে সেভ ও কার্ড প্রিন্ট</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('voucherCanvas');
+        const ctx = canvas.getContext('2d');
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoVWEQ8_N5Yk0UJPotn3hQ1vOIP1UwOKMFjp10LOQO2tgFNtSAdFMUty7ZehRSeVms/exec";
+
+        let activeImage = null;
+
+        const amountInput = document.getElementById('amountInput');
+        const serialInput = document.getElementById('serialInput');
+        const nameInput = document.getElementById('nameInput');
+        const issueDateInput = document.getElementById('issueDateInput');
+        const expiryDateInput = document.getElementById('expiryDateInput');
+        const imageUpload = document.getElementById('imageUpload');
+        const statusMsg = document.getElementById('statusMsg');
+
+        function numberToBengaliWords(num) {
+            if (num == 120) return "একশ বিশ টাকা";
+            if (num == 100) return "একশ টাকা";
+            if (num == 200) return "দুইশ টাকা";
+            if (num == 500) return "পাঁচশ টাকা";
+            if (num == 1000) return "এক হাজার টাকা";
+            const bengaliNums = {'0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯'};
+            let str = String(num).split('').map(d => bengaliNums[d] || d).join('');
+            return `${str} টাকা`;
+        }
+
+        function initAutoDates() {
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            issueDateInput.value = `${day}-${month}-${year}`;
+
+            const expiry = new Date();
+            expiry.setDate(today.getDate() + 7);
+            const expDay = String(expiry.getDate()).padStart(2, '0');
+            const expMonth = String(expiry.getMonth() + 1).padStart(2, '0');
+            const expYear = expiry.getFullYear();
+            expiryDateInput.value = `${expDay}-${expMonth}-${expYear}`;
+        }
+
+        [amountInput, nameInput].forEach(input => {
+            input.addEventListener('input', drawExactBanknote);
+        });
+
+        imageUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        activeImage = img;
+                        drawExactBanknote();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function generateNewSerial() {
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const prefix = letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26));
+            const num = Math.floor(100000 + Math.random() * 900000);
+            serialInput.value = `${prefix}${num}LG`;
+            drawExactBanknote();
+        }
+
+        function drawExactBanknote() {
+            const amt = amountInput.value || "120";
+
+            ctx.fillStyle = '#fbf9f1';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = '#291102';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(14, 14, canvas.width - 28, canvas.height - 28);
+
+            ctx.strokeStyle = '#ea580c';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(22, 22, canvas.width - 44, canvas.height - 44);
+
+            const grad = ctx.createLinearGradient(40, 22, 40, canvas.height - 22);
+            grad.addColorStop(0, '#fde047');
+            grad.addColorStop(0.3, '#f97316');
+            grad.addColorStop(0.6, '#ec4899');
+            grad.addColorStop(1, '#6366f1');
+            ctx.fillStyle = grad;
+            ctx.fillRect(40, 22, 55, canvas.height - 44);
+
+            ctx.save();
+            ctx.fillStyle = '#291102';
+            ctx.font = 'bold 13px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(amt, 67, 55);
+            ctx.font = '900 13px monospace';
+            ctx.fillStyle = '#065f46';
+            ctx.fillText(serialInput.value, 67, 100);
+            ctx.font = '16px sans-serif';
+            ctx.fillText('🍥', 67, 180);
+            ctx.font = 'bold 15px serif';
+            ctx.fillText('৳', 67, 260);
+            ctx.fillStyle = '#291102';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText(amt, 67, 340);
+            ctx.fillText('NINJA', 67, 420);
+            ctx.restore();
+
+            ctx.fillStyle = '#291102';
+            ctx.font = 'bold 22px serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('壱百弐拾円', 115, 60);
+
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 28px "Segoe UI", serif';
+            ctx.fillText('さくら市場 • 木ノ葉銀行', 525, 60);
+
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillStyle = '#c2410c';
+            ctx.fillText('SAKURA MARKET NINJA TREASURY NOTE', 525, 82);
+
+            ctx.fillStyle = '#1c0a00';
+            ctx.font = '900 96px "Arial Black", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(`৳${amt}`, 105, 230);
+
+            ctx.font = 'bold 13px serif';
+            ctx.fillStyle = '#7c2d12';
+            ctx.fillText('木ノ葉の里 / BANK OF SAKURA', 105, 265);
+
+            drawStarIcon(215, 160);
+            drawStarIcon(135, 470);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(280, 520, 55, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(234, 88, 12, 0.35)';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(280, 520, 18, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(234, 88, 12, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.fillStyle = '#291102';
+            ctx.font = 'bold 36px "Segoe UI", serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(numberToBengaliWords(amt), 525, 145);
+
+            ctx.font = 'bold 18px "Segoe UI", serif';
+            ctx.fillStyle = '#7c2d12';
+            ctx.fillText(`প্রাপক: ${nameInput.value || '_________________'}`, 525, 190);
+
+            drawRedHankoSeal(665, 175);
+
+            ctx.save();
+            ctx.strokeStyle = '#c2410c';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 3]);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.fillRect(385, 220, 275, 95);
+            ctx.strokeRect(385, 220, 275, 95);
+
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#c2410c';
+            ctx.font = 'bold 15px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('REDEEMED STAMP BOX', 522, 255);
+            ctx.font = '12px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#57534e';
+            ctx.restore();
+
+            ctx.fillStyle = '#ea580c';
+            ctx.fillRect(385, 335, 275, 46);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 16px "Arial Black", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`ISSUE : ${issueDateInput.value}`, 522, 365);
+
+            ctx.fillStyle = '#7c2d12';
+            ctx.fillRect(385, 393, 275, 46);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 16px "Arial Black", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`EXPIRY : ${expiryDateInput.value}`, 522, 423);
+
+            ctx.fillStyle = '#065f46';
+            ctx.font = '900 22px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(serialInput.value, 525, 510);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.ellipse(1010, 310, 150, 190, 0, 0, Math.PI * 2);
+            ctx.strokeStyle = '#291102';
+            ctx.lineWidth = 7;
+            ctx.stroke();
+            ctx.clip();
+
+            if (activeImage) {
+                ctx.drawImage(activeImage, 860, 110, 300, 400);
+            } else {
+                ctx.fillStyle = '#ffedd5';
+                ctx.fillRect(860, 110, 300, 400);
+                
+                ctx.fillStyle = '#eab308';
+                ctx.beginPath();
+                ctx.moveTo(960, 140); ctx.lineTo(1010, 110); ctx.lineTo(1060, 140);
+                ctx.lineTo(1110, 160); ctx.lineTo(1060, 200); ctx.lineTo(1130, 230);
+                ctx.lineTo(1050, 270); ctx.lineTo(970, 270); ctx.lineTo(890, 230);
+                ctx.lineTo(960, 200); ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#3f3f46';
+                ctx.fillRect(940, 230, 140, 40);
+                ctx.fillStyle = '#d4d4d8';
+                ctx.fillRect(950, 240, 120, 20);
+
+                ctx.fillStyle = '#fed7aa';
+                ctx.fillRect(940, 270, 140, 160);
+
+                ctx.strokeStyle = '#9a3412';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(960, 320); ctx.lineTo(990, 330);
+                ctx.moveTo(960, 340); ctx.lineTo(990, 345);
+                ctx.moveTo(1030, 330); ctx.lineTo(1060, 320);
+                ctx.moveTo(1030, 345); ctx.lineTo(1060, 340);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            ctx.fillStyle = '#291102';
+            ctx.font = 'bold 64px serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(`৳${amt}`, canvas.width - 55, canvas.height - 35);
+        }
+
+        function drawRedHankoSeal(x, y) {
+            ctx.save();
+            ctx.strokeStyle = '#c2410c';
+            ctx.fillStyle = 'rgba(194, 65, 12, 0.15)';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.arc(x, y, 32, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#c2410c';
+            ctx.font = 'bold 14px serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('火影', x, y - 5);
+            ctx.fillText('之印', x, y + 13);
+            ctx.restore();
+        }
+
+        function drawStarIcon(x, y) {
+            ctx.save();
+            ctx.fillStyle = '#291102';
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        async function syncAndPrintExactNote() {
+            statusMsg.className = 'status-msg status-loading';
+            statusMsg.innerText = 'গুগল শিটে ৬ কলাম অনুযায়ী সেভ হচ্ছে...';
+
+            const payload = new URLSearchParams({
+                'voucherId': serialInput.value,     // Column A
+                'customerName': nameInput.value || 'Walk-in Counter Customer', // Column B
+                'phone': 'N/A',                      // Column C
+                'issueDate': issueDateInput.value,   // Column D
+                'expiryDate': expiryDateInput.value, // Column E
+                'amount': `৳${amountInput.value}`    // Column F (Amount)
+            });
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: payload
+                });
+
+                statusMsg.className = 'status-msg status-success';
+                statusMsg.innerText = 'শিটে সফলভাবে সেভ হয়েছে! প্রিন্ট করা হচ্ছে...';
+
+                setTimeout(() => {
+                    window.print();
+                    generateNewSerial();
+                }, 400);
+
+            } catch (err) {
+                console.error(err);
+                statusMsg.className = 'status-msg status-success';
+                statusMsg.innerText = 'প্রিন্ট উইন্ডো খোলা হচ্ছে...';
+                window.print();
+            }
+        }
+
+        window.onload = function() {
+            initAutoDates();
+            drawExactBanknote();
+        };
+    </script>
+</body>
+</html>
