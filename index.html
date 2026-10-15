@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>사쿠라 마켓 - 50,000원 공식 화폐 스타일 바우처</title>
+    <!-- Include QRCode generator library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
             --primary-bg: #09090b;
@@ -149,6 +151,11 @@
             background: #fff;
         }
 
+        /* Hidden div to render QR Code for Canvas drawing */
+        #qrcode-container {
+            display: none;
+        }
+
         .form-card {
             background: var(--panel-bg);
             padding: 20px;
@@ -260,6 +267,9 @@
 </head>
 <body>
 
+    <!-- Hidden QR Code container -->
+    <div id="qrcode-container"></div>
+
     <!-- Netflix-Style Owner Login Gate Overlay -->
     <div id="authOverlay">
         <div class="auth-card">
@@ -327,9 +337,8 @@
 
     <script>
         const ADMIN_PIN = "28282805";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoVWEQ8_N5Yk0UJPotn3hQ1vOIP1UwOKMFjp10LOQO2tgFNtSAdFMUty7ZehRSeVms/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwHa6QG1OzmwuBCGZQ5PvRDK-2S5bmeEcoP0m7ooZZSMbqmLlzqk6MuCiwPCXG0W6fI/exec";
 
-        // Check Local Storage on page load (Netflix-style persistent login)
         window.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem("sakura_owner_auth") === "true") {
                 unlockApp();
@@ -353,12 +362,13 @@
             document.getElementById('authOverlay').style.display = 'none';
             document.getElementById('appContainer').style.display = 'flex';
             initAutoDates();
-            drawVoucherNote();
+            generateNewSerial();
         }
 
         const canvas = document.getElementById('voucherCanvas');
         const ctx = canvas.getContext('2d');
         let processedImageCanvas = null;
+        let qrCodeImage = null;
 
         const amountInput = document.getElementById('amountInput');
         const serialInput = document.getElementById('serialInput');
@@ -432,7 +442,34 @@
             const num = Math.floor(1000000 + Math.random() * 9000000);
             const suffix = letters.charAt(Math.floor(Math.random() * 26));
             serialInput.value = `${prefix} ${num} ${suffix}`;
-            drawVoucherNote();
+            
+            createQRCodeAndRedraw(serialInput.value);
+        }
+
+        function createQRCodeAndRedraw(text) {
+            const container = document.getElementById('qrcode-container');
+            container.innerHTML = "";
+            
+            // QR কোডের ভেতরে সরাসরি অটো-রিডিম লিংক এম্বেড করা হলো
+            const directRedeemURL = `${SCRIPT_URL}?action=redeem&voucherId=${encodeURIComponent(text.trim())}`;
+
+            new QRCode(container, {
+                text: directRedeemURL,
+                width: 250,
+                height: 250,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            setTimeout(() => {
+                const qrImgElement = container.querySelector('img');
+                if (qrImgElement) {
+                    qrCodeImage = new Image();
+                    qrCodeImage.src = qrImgElement.src;
+                }
+                drawVoucherNote();
+            }, 120);
         }
 
         function drawGuillocheBorder() {
@@ -571,6 +608,16 @@
             ctx.textAlign = 'left';
             ctx.fillText('총재인', 475, 365);
             drawRedSquareGovernorSeal(530, 360);
+
+            // Large QR Code Placement
+            if (qrCodeImage) {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(710, 140, 150, 150);
+                ctx.strokeStyle = '#b45309';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(710, 140, 150, 150);
+                ctx.drawImage(qrCodeImage, 718, 148, 134, 134);
+            }
 
             ctx.save();
             ctx.beginPath();
