@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>সাাকুরা মার্কেট - নিনজা ব্যাংক নোট জেনারেটর</title>
+    <title>사쿠라 마켓 - 50,000원 공식 화폐 스타일 바우처</title>
     <style>
         :root {
             --primary-bg: #09090b;
             --panel-bg: #18181b;
-            --accent-orange: #ea580c;
             --text-light: #f4f4f5;
             --border-color: #27272a;
         }
@@ -30,13 +29,97 @@
             padding: 15px;
         }
 
+        /* Netflix-style Auth Gate Overlay */
+        #authOverlay {
+            position: fixed;
+            inset: 0;
+            background: #09090b;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            padding: 30px;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.9);
+            text-align: center;
+        }
+
+        .auth-card h2 {
+            color: #fbbf24;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .auth-card p {
+            color: #a1a1aa;
+            font-size: 13px;
+        }
+
+        .auth-card input {
+            background: #09090b;
+            border: 1px solid #3f3f46;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            text-align: center;
+        }
+
+        .auth-card input:focus {
+            border-color: #fbbf24;
+        }
+
+        .auth-btn {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .auth-btn:hover {
+            opacity: 0.9;
+        }
+
+        .auth-error {
+            color: #fca5a5;
+            font-size: 12px;
+            display: none;
+        }
+
+        /* Main App Container */
+        #appContainer {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 650px;
+            gap: 15px;
+        }
+
         .header-title {
             text-align: center;
             margin-bottom: 15px;
         }
 
         .header-title h1 {
-            color: var(--accent-orange);
+            color: #fbbf24;
             font-size: 22px;
             margin-bottom: 4px;
         }
@@ -44,15 +127,6 @@
         .header-title p {
             color: #a1a1aa;
             font-size: 13px;
-        }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-width: 600px;
-            width: 100%;
-            align-items: center;
         }
 
         .preview-card {
@@ -113,7 +187,7 @@
         }
 
         .form-group input:focus {
-            border-color: var(--accent-orange);
+            border-color: #fbbf24;
         }
 
         .form-group input[readonly] {
@@ -146,9 +220,9 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #ea580c, #c2410c);
+            background: linear-gradient(135deg, #d97706, #b45309);
             color: white;
-            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
         }
 
         .btn-secondary {
@@ -186,63 +260,105 @@
 </head>
 <body>
 
-    <div class="header-title">
-        <h1>🍥 সাাকুরা মার্কেট - নিনজা ব্যাংক নোট</h1>
-        <p>জাপানি ফেস-এফ স্টাইল ও অটো গুগল শিট সিঙ্ক সিস্টেম</p>
+    <!-- Netflix-Style Owner Login Gate Overlay -->
+    <div id="authOverlay">
+        <div class="auth-card">
+            <h2>🔒 점주 전용 보안 인증</h2>
+            <p>사쿠라 마켓 화폐 발행 시스템에 접근하려면 비밀번호를 입력하세요.</p>
+            <input type="password" id="authPasswordInput" placeholder="Enter Owner Password...">
+            <button class="auth-btn" onclick="authenticateOwner()">로그인 (Login)</button>
+            <div id="authErrorMsg" class="auth-error">비밀번호가 올바르지 않습니다!</div>
+        </div>
     </div>
 
-    <div class="container">
-        <div class="preview-card">
-            <canvas id="voucherCanvas" width="1280" height="620"></canvas>
+    <!-- Main Builder Interface (Hidden until authenticated) -->
+    <div id="appContainer">
+        <div class="header-title">
+            <h1>🇰🇷 사쿠라 마켓 - 50,000원 공식 화폐 스타일 바우처</h1>
+            <p>점주 인증 완료된 공식 화폐 생성 시스템</p>
         </div>
 
-        <div class="form-card">
-            <div class="form-group">
-                <label>টাকা পরিমাণ (Amount in ৳)</label>
-                <input type="number" id="amountInput" value="120">
+        <div class="container" style="width: 100%;">
+            <div class="preview-card">
+                <canvas id="voucherCanvas" width="1320" height="580"></canvas>
             </div>
 
-            <div class="form-group">
-                <label>সিরিয়াল আইডি</label>
-                <input type="text" id="serialInput" value="AM279006LG" readonly>
-            </div>
+            <div class="form-card">
+                <div class="form-group">
+                    <label>금액 값 (Amount Value)</label>
+                    <input type="number" id="amountInput" value="500">
+                </div>
 
-            <div class="form-group full-width">
-                <label>গ্রাহকের নাম (Customer Name)</label>
-                <input type="text" id="nameInput" value="Arnab Deb">
-            </div>
+                <div class="form-group">
+                    <label>일련번호 (Serial ID)</label>
+                    <input type="text" id="serialInput" value="HF 1794971 E" readonly>
+                </div>
 
-            <div class="form-group">
-                <label>ইস্যু তারিখ</label>
-                <input type="text" id="issueDateInput" readonly>
-            </div>
+                <div class="form-group full-width">
+                    <label>수령인 이름 (Customer Name)</label>
+                    <input type="text" id="nameInput" value="Arnab Deb">
+                </div>
 
-            <div class="form-group">
-                <label>মেয়াদ (Expiry +7 Days)</label>
-                <input type="text" id="expiryDateInput" readonly>
-            </div>
+                <div class="form-group">
+                    <label>발행일자 (Issue Date)</label>
+                    <input type="text" id="issueDateInput" readonly>
+                </div>
 
-            <div class="form-group full-width">
-                <label>চরিত্রের পোর্ট্রেট ছবি পরিবর্তন (ঐচ্ছিক)</label>
-                <input type="file" id="imageUpload" accept="image/*">
-            </div>
+                <div class="form-group">
+                    <label>유효기간 (Expiry Date)</label>
+                    <input type="text" id="expiryDateInput" readonly>
+                </div>
 
-            <div id="statusMsg" class="status-msg"></div>
+                <div class="form-group full-width">
+                    <label>프로필 사진 업로드 (자동 흑백 뱅크노트 풍 변환)</label>
+                    <input type="file" id="imageUpload" accept="image/*">
+                </div>
 
-            <div class="btn-container">
-                <button class="btn btn-secondary" onclick="generateNewSerial()">নতুন সিরিয়াল</button>
-                <button class="btn btn-download" onclick="downloadCanvasAsPNG()">📥 PNG ডাউনলোড</button>
-                <button class="btn btn-primary" onclick="syncAndDownloadPNG()">শিটে সেভ ও PNG ডাউনলোড</button>
+                <div id="statusMsg" class="status-msg"></div>
+
+                <div class="btn-container">
+                    <button class="btn btn-secondary" onclick="generateNewSerial()">새 번호 생성</button>
+                    <button class="btn btn-download" onclick="downloadCanvasAsPNG()">📥 PNG 다운로드</button>
+                    <button class="btn btn-primary" onclick="syncAndDownloadPNG()">시트에 저장 및 PNG 다운로드</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('voucherCanvas');
-        const ctx = canvas.getContext('2d');
+        const ADMIN_PIN = "28282805";
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoVWEQ8_N5Yk0UJPotn3hQ1vOIP1UwOKMFjp10LOQO2tgFNtSAdFMUty7ZehRSeVms/exec";
 
-        let activeImage = null;
+        // Check Local Storage on page load (Netflix-style persistent login)
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem("sakura_owner_auth") === "true") {
+                unlockApp();
+            }
+        });
+
+        function authenticateOwner() {
+            const entered = document.getElementById('authPasswordInput').value.trim();
+            const errorMsg = document.getElementById('authErrorMsg');
+
+            if (entered === ADMIN_PIN) {
+                localStorage.setItem("sakura_owner_auth", "true");
+                unlockApp();
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('authPasswordInput').value = '';
+            }
+        }
+
+        function unlockApp() {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'flex';
+            initAutoDates();
+            drawVoucherNote();
+        }
+
+        const canvas = document.getElementById('voucherCanvas');
+        const ctx = canvas.getContext('2d');
+        let processedImageCanvas = null;
 
         const amountInput = document.getElementById('amountInput');
         const serialInput = document.getElementById('serialInput');
@@ -251,17 +367,6 @@
         const expiryDateInput = document.getElementById('expiryDateInput');
         const imageUpload = document.getElementById('imageUpload');
         const statusMsg = document.getElementById('statusMsg');
-
-        function numberToBengaliWords(num) {
-            if (num == 120) return "একশ বিশ টাকা";
-            if (num == 100) return "একশ টাকা";
-            if (num == 200) return "দুইশ টাকা";
-            if (num == 500) return "পাঁচশ টাকা";
-            if (num == 1000) return "এক হাজার টাকা";
-            const bengaliNums = {'0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯'};
-            let str = String(num).split('').map(d => bengaliNums[d] || d).join('');
-            return `${str} টাকা`;
-        }
 
         function initAutoDates() {
             const today = new Date();
@@ -279,7 +384,7 @@
         }
 
         [amountInput, nameInput].forEach(input => {
-            input.addEventListener('input', drawExactBanknote);
+            input.addEventListener('input', drawVoucherNote);
         });
 
         imageUpload.addEventListener('change', function(e) {
@@ -289,8 +394,8 @@
                 reader.onload = function(event) {
                     const img = new Image();
                     img.onload = function() {
-                        activeImage = img;
-                        drawExactBanknote();
+                        processedImageCanvas = applyBanknoteFilter(img);
+                        drawVoucherNote();
                     };
                     img.src = event.target.result;
                 };
@@ -298,249 +403,266 @@
             }
         });
 
+        function applyBanknoteFilter(img) {
+            const tempCanvas = document.createElement('canvas');
+            const tCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = 380;
+            tempCanvas.height = 460;
+
+            tCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+            const imgData = tCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            const d = imgData.data;
+
+            for (let i = 0; i < d.length; i += 4) {
+                let gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                gray = (gray - 128) * 1.3 + 128;
+                gray = Math.min(255, Math.max(0, gray));
+
+                d[i] = gray * 0.92;
+                d[i+1] = gray * 0.94;
+                d[i+2] = gray * 0.97;
+            }
+            tCtx.putImageData(imgData, 0, 0);
+            return tempCanvas;
+        }
+
         function generateNewSerial() {
             const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             const prefix = letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26));
-            const num = Math.floor(100000 + Math.random() * 900000);
-            serialInput.value = `${prefix}${num}LG`;
-            drawExactBanknote();
+            const num = Math.floor(1000000 + Math.random() * 9000000);
+            const suffix = letters.charAt(Math.floor(Math.random() * 26));
+            serialInput.value = `${prefix} ${num} ${suffix}`;
+            drawVoucherNote();
         }
 
-        function drawExactBanknote() {
-            const amt = amountInput.value || "120";
-
-            ctx.fillStyle = '#fbf9f1';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.strokeStyle = '#291102';
-            ctx.lineWidth = 8;
-            ctx.strokeRect(14, 14, canvas.width - 28, canvas.height - 28);
-
-            ctx.strokeStyle = '#ea580c';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(22, 22, canvas.width - 44, canvas.height - 44);
-
-            const grad = ctx.createLinearGradient(40, 22, 40, canvas.height - 22);
-            grad.addColorStop(0, '#fde047');
-            grad.addColorStop(0.3, '#f97316');
-            grad.addColorStop(0.6, '#ec4899');
-            grad.addColorStop(1, '#6366f1');
-            ctx.fillStyle = grad;
-            ctx.fillRect(40, 22, 55, canvas.height - 44);
-
+        function drawGuillocheBorder() {
             ctx.save();
-            ctx.fillStyle = '#291102';
-            ctx.font = 'bold 13px monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(amt, 67, 55);
-            ctx.font = '900 13px monospace';
-            ctx.fillStyle = '#065f46';
-            ctx.fillText(serialInput.value, 67, 100);
-            ctx.font = '16px sans-serif';
-            ctx.fillText('🍥', 67, 180);
-            ctx.font = 'bold 15px serif';
-            ctx.fillText('৳', 67, 260);
-            ctx.fillStyle = '#291102';
-            ctx.font = 'bold 12px monospace';
-            ctx.fillText(amt, 67, 340);
-            ctx.fillText('NINJA', 67, 420);
-            ctx.restore();
+            ctx.strokeStyle = '#b45309';
+            ctx.lineWidth = 1.5;
+            
+            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+            ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
 
-            ctx.fillStyle = '#291102';
-            ctx.font = 'bold 22px serif';
-            ctx.textAlign = 'left';
-            ctx.fillText('壱百弐拾円', 115, 60);
-
-            ctx.textAlign = 'center';
-            ctx.font = 'bold 28px "Segoe UI", serif';
-            ctx.fillText('さくら市場 • 木ノ葉銀行', 525, 60);
-
-            ctx.font = 'bold 11px sans-serif';
-            ctx.fillStyle = '#c2410c';
-            ctx.fillText('SAKURA MARKET NINJA TREASURY NOTE', 525, 82);
-
-            ctx.fillStyle = '#1c0a00';
-            ctx.font = '900 96px "Arial Black", sans-serif';
-            ctx.textAlign = 'left';
-            ctx.fillText(`৳${amt}`, 105, 230);
-
-            ctx.font = 'bold 13px serif';
-            ctx.fillStyle = '#7c2d12';
-            ctx.fillText('木ノ葉の里 / BANK OF SAKURA', 105, 265);
-
-            drawStarIcon(215, 160);
-            drawStarIcon(135, 470);
-
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(280, 520, 55, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(234, 88, 12, 0.35)';
-            ctx.lineWidth = 2.5;
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.arc(280, 520, 18, 0, Math.PI * 2);
-            ctx.strokeStyle = 'rgba(234, 88, 12, 0.4)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.restore();
-
-            ctx.fillStyle = '#291102';
-            ctx.font = 'bold 36px "Segoe UI", serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(numberToBengaliWords(amt), 525, 145);
-
-            ctx.font = 'bold 18px "Segoe UI", serif';
-            ctx.fillStyle = '#7c2d12';
-            ctx.fillText(`প্রাপক: ${nameInput.value || '_________________'}`, 525, 190);
-
-            drawRedHankoSeal(665, 175);
-
-            ctx.save();
-            ctx.strokeStyle = '#c2410c';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([4, 3]);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-            ctx.fillRect(385, 220, 275, 95);
-            ctx.strokeRect(385, 220, 275, 95);
-
-            ctx.setLineDash([]);
-            ctx.fillStyle = '#c2410c';
-            ctx.font = 'bold 15px "Segoe UI", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('REDEEMED STAMP BOX', 522, 255);
-            ctx.font = '12px "Segoe UI", sans-serif';
-            ctx.fillStyle = '#57534e';
-            ctx.fillText('(এখানে আপনার সিল দিন)', 522, 288);
-            ctx.restore();
-
-            ctx.fillStyle = '#ea580c';
-            ctx.fillRect(385, 335, 275, 46);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '900 16px "Arial Black", monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(`ISSUE : ${issueDateInput.value}`, 522, 365);
-
-            ctx.fillStyle = '#7c2d12';
-            ctx.fillRect(385, 393, 275, 46);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '900 16px "Arial Black", monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(`EXPIRY : ${expiryDateInput.value}`, 522, 423);
-
-            ctx.fillStyle = '#065f46';
-            ctx.font = '900 22px monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(serialInput.value, 525, 510);
-
-            ctx.save();
-            ctx.beginPath();
-            ctx.ellipse(1010, 310, 150, 190, 0, 0, Math.PI * 2);
-            ctx.strokeStyle = '#291102';
-            ctx.lineWidth = 7;
-            ctx.stroke();
-            ctx.clip();
-
-            if (activeImage) {
-                ctx.drawImage(activeImage, 860, 110, 300, 400);
-            } else {
-                ctx.fillStyle = '#ffedd5';
-                ctx.fillRect(860, 110, 300, 400);
-                
-                ctx.fillStyle = '#eab308';
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(180, 83, 9, 0.4)';
+            for (let x = 25; x < canvas.width - 25; x += 15) {
                 ctx.beginPath();
-                ctx.moveTo(960, 140); ctx.lineTo(1010, 110); ctx.lineTo(1060, 140);
-                ctx.lineTo(1110, 160); ctx.lineTo(1060, 200); ctx.lineTo(1130, 230);
-                ctx.lineTo(1050, 270); ctx.lineTo(970, 270); ctx.lineTo(890, 230);
-                ctx.lineTo(960, 200); ctx.closePath();
-                ctx.fill();
+                ctx.moveTo(x, 16);
+                ctx.lineTo(x + 5, 26);
+                ctx.lineTo(x + 10, 16);
+                ctx.stroke();
 
-                ctx.fillStyle = '#3f3f46';
-                ctx.fillRect(940, 230, 140, 40);
-                ctx.fillStyle = '#d4d4d8';
-                ctx.fillRect(950, 240, 120, 20);
-
-                ctx.fillStyle = '#fed7aa';
-                ctx.fillRect(940, 270, 140, 160);
-
-                ctx.strokeStyle = '#9a3412';
-                ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.moveTo(960, 320); ctx.lineTo(990, 330);
-                ctx.moveTo(960, 340); ctx.lineTo(990, 345);
-                ctx.moveTo(1030, 330); ctx.lineTo(1060, 320);
-                ctx.moveTo(1030, 345); ctx.lineTo(1060, 340);
+                ctx.moveTo(x, canvas.height - 16);
+                ctx.lineTo(x + 5, canvas.height - 26);
+                ctx.lineTo(x + 10, canvas.height - 16);
                 ctx.stroke();
             }
             ctx.restore();
-
-            ctx.fillStyle = '#291102';
-            ctx.font = 'bold 64px serif';
-            ctx.textAlign = 'right';
-            ctx.fillText(`৳${amt}`, canvas.width - 55, canvas.height - 35);
         }
 
-        function drawRedHankoSeal(x, y) {
+        function drawVoucherNote() {
+            const amt = amountInput.value || "500";
+
+            const bgGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            bgGrad.addColorStop(0, '#fef08a');
+            bgGrad.addColorStop(0.3, '#fde047');
+            bgGrad.addColorStop(0.7, '#eab308');
+            bgGrad.addColorStop(1, '#ca8a04');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawGuillocheBorder();
+
             ctx.save();
-            ctx.strokeStyle = '#c2410c';
-            ctx.fillStyle = 'rgba(194, 65, 12, 0.15)';
-            ctx.lineWidth = 3.5;
+            ctx.fillStyle = 'rgba(74, 124, 89, 0.15)';
             ctx.beginPath();
-            ctx.arc(x, y, 32, 0, Math.PI * 2);
+            ctx.moveTo(350, 200);
+            ctx.bezierCurveTo(450, 100, 600, 300, 750, 180);
+            ctx.lineTo(750, 220);
+            ctx.bezierCurveTo(600, 340, 450, 150, 350, 240);
+            ctx.closePath();
             ctx.fill();
+
+            ctx.fillStyle = 'rgba(120, 53, 15, 0.12)';
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(500 + i * 18, 220 + (i % 2) * 15, 12, 0, Math.PI * 2);
+                ctx.arc(520 + i * 15, 235 + (i % 2) * 12, 10, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+
+            const foilGrad = ctx.createLinearGradient(30, 0, 110, 0);
+            foilGrad.addColorStop(0, '#1e293b');
+            foilGrad.addColorStop(0.3, '#64748b');
+            foilGrad.addColorStop(0.6, '#cbd5e1');
+            foilGrad.addColorStop(1, '#334155');
+            ctx.fillStyle = foilGrad;
+            ctx.fillRect(30, 30, 75, canvas.height - 60);
+
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 18px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(amt, 67, 120);
+
+            ctx.beginPath();
+            ctx.arc(67, 240, 24, 0, Math.PI * 2);
+            ctx.strokeStyle = '#fef08a';
+            ctx.lineWidth = 2;
             ctx.stroke();
 
-            ctx.fillStyle = '#c2410c';
-            ctx.font = 'bold 14px serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('火影', x, y - 5);
-            ctx.fillText('之印', x, y + 13);
+            ctx.fillText(amt, 67, 360);
+            
+            ctx.font = 'bold 13px monospace';
+            ctx.fillText(`SKR-${amt}`, 67, 480);
             ctx.restore();
-        }
 
-        function drawStarIcon(x, y) {
-            ctx.save();
-            ctx.fillStyle = '#291102';
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 22px monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText(serialInput.value, 135, 55);
+
             ctx.beginPath();
-            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.arc(420, 48, 15, 0, Math.PI * 2);
+            ctx.fillStyle = '#dc2626';
             ctx.fill();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 26px "Segoe UI", sans-serif';
+            ctx.fillText('한국은행 • 사쿠라 마켓', 445, 56);
+
+            ctx.font = '900 42px "Segoe UI", serif';
+            ctx.fillStyle = '#111827';
+            ctx.fillText('오만원권 바우처', 445, 115);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '900 95px "Arial Black", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(`৳${amt}`, 135, 300);
+
+            ctx.font = 'bold 15px serif';
+            ctx.fillStyle = '#78350f';
+            ctx.fillText('OFFICIAL SAKURA MARKET TREASURY NOTE', 140, 335);
+
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 20px "Segoe UI", sans-serif';
+            ctx.fillText(`수령인 (Customer): ${nameInput.value || '___________'}`, 140, 390);
+
+            ctx.fillStyle = '#b45309';
+            ctx.fillRect(140, 415, 230, 34);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`ISSUE : ${issueDateInput.value}`, 255, 437);
+
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(385, 415, 230, 34);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText(`EXPIRY : ${expiryDateInput.value}`, 500, 437);
+
+            ctx.fillStyle = '#374151';
+            ctx.font = 'bold 16px serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('총재인', 475, 365);
+            drawRedSquareGovernorSeal(530, 360);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.ellipse(1070, 275, 170, 210, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#fffbeb';
+            ctx.fill();
+            ctx.strokeStyle = '#d97706';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+            ctx.clip();
+
+            if (processedImageCanvas) {
+                ctx.drawImage(processedImageCanvas, 900, 60, 340, 430);
+            } else {
+                ctx.fillStyle = '#fef08a';
+                ctx.fillRect(900, 60, 340, 430);
+
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.arc(1070, 160, 80, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#fef08a';
+                ctx.beginPath();
+                ctx.ellipse(1070, 210, 50, 65, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(980, 310, 180, 180);
+            }
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(canvas.width - 45, 180);
+            ctx.rotate(Math.PI / 2);
+            ctx.fillStyle = '#1e293b';
+            ctx.font = '900 65px "Arial Black", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(amt, 0, 0);
+            ctx.restore();
+
+            ctx.fillStyle = '#dc2626';
+            ctx.font = 'bold 18px monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText(serialInput.value, canvas.width - 130, canvas.height - 35);
+        }
+
+        function drawRedSquareGovernorSeal(x, y) {
+            ctx.save();
+            ctx.strokeStyle = '#dc2626';
+            ctx.fillStyle = 'rgba(220, 38, 38, 0.15)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y - 18, 26, 26);
+            ctx.fillRect(x, y - 18, 26, 26);
+
+            ctx.fillStyle = '#dc2626';
+            ctx.font = '900 9px serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('한銀', x + 13, y - 6);
+            ctx.fillText('총재', x + 13, y + 4);
             ctx.restore();
         }
 
-        // DOWNLOAD CANVAS AS PNG FUNCTION
         function downloadCanvasAsPNG() {
             const imageURI = canvas.toDataURL('image/png');
             const link = document.createElement('a');
             const serialName = serialInput.value.replace(/\s+/g, '_');
-            link.download = `Sakura_Ninja_Note_${serialName}.png`;
+            link.download = `Sakura_Currency_Voucher_${serialName}.png`;
             link.href = imageURI;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
             statusMsg.className = 'status-msg status-success';
-            statusMsg.innerText = 'গ্যালারিতে নিনজা নোট PNG ডাউনলোড হয়েছে!';
+            statusMsg.innerText = '화폐 스타일 바우처 PNG 다운로드 완료!';
             setTimeout(() => { statusMsg.style.display = 'none'; }, 3000);
         }
 
-        // SYNC TO SHEET AND DOWNLOAD PNG AUTOMATICALLY
         async function syncAndDownloadPNG() {
             statusMsg.className = 'status-msg status-loading';
-            statusMsg.innerText = 'গুগল শিটে ডেটা সেভ ও PNG ডাউনলোড হচ্ছে...';
+            statusMsg.innerText = '구글 시트에 저장 및 PNG 다운로드 진행 중...';
 
             const payload = new URLSearchParams({
-                'voucherId': serialInput.value,     // Column A
-                'customerName': nameInput.value || 'Walk-in Counter Customer', // Column B
-                'phone': 'N/A',                      // Column C
-                'issueDate': issueDateInput.value,   // Column D
-                'expiryDate': expiryDateInput.value, // Column E
-                'amount': `৳${amountInput.value}`    // Column F (Amount)
+                'voucherId': serialInput.value,
+                'customerName': nameInput.value || 'Walk-in Counter Customer',
+                'phone': 'N/A',
+                'issueDate': issueDateInput.value,
+                'expiryDate': expiryDateInput.value,
+                'amount': `৳${amountInput.value}`
             });
 
             try {
-                // Background fetch to Google Sheet
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -548,11 +670,10 @@
                     body: payload
                 });
 
-                // Trigger PNG Download
                 downloadCanvasAsPNG();
 
                 statusMsg.className = 'status-msg status-success';
-                statusMsg.innerText = 'শিটে সফলভাবে সেভ হয়েছে এবং PNG ডাউনলোড করা হয়েছে!';
+                statusMsg.innerText = '시트에 성공적으로 저장되었으며 PNG가 다운로드 되었습니다!';
 
                 setTimeout(() => {
                     generateNewSerial();
@@ -560,17 +681,11 @@
 
             } catch (err) {
                 console.error(err);
-                // Even if sheet fetch fails due to CORS/network, still fallback to downloading PNG
                 downloadCanvasAsPNG();
                 statusMsg.className = 'status-msg status-success';
-                statusMsg.innerText = 'PNG ডাউনলোড সম্পন্ন হয়েছে!';
+                statusMsg.innerText = 'PNG 다운로드가 완료 되었습니다!';
             }
         }
-
-        window.onload = function() {
-            initAutoDates();
-            drawExactBanknote();
-        };
     </script>
 </body>
 </html>
