@@ -182,24 +182,6 @@
             color: #93c5fd;
             display: block;
         }
-
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #voucherCanvas, #voucherCanvas * {
-                visibility: visible;
-            }
-            #voucherCanvas {
-                position: fixed;
-                left: 0;
-                top: 0;
-                width: 100% !important;
-                height: auto !important;
-                max-height: 100vh;
-                object-fit: contain;
-            }
-        }
     </style>
 </head>
 <body>
@@ -250,7 +232,7 @@
             <div class="btn-container">
                 <button class="btn btn-secondary" onclick="generateNewSerial()">নতুন সিরিয়াল</button>
                 <button class="btn btn-download" onclick="downloadCanvasAsPNG()">📥 PNG ডাউনলোড</button>
-                <button class="btn btn-primary" onclick="syncAndPrintExactNote()">শিটে সেভ ও কার্ড প্রিন্ট</button>
+                <button class="btn btn-primary" onclick="syncAndDownloadPNG()">শিটে সেভ ও PNG ডাউনলোড</button>
             </div>
         </div>
     </div>
@@ -543,9 +525,10 @@
             setTimeout(() => { statusMsg.style.display = 'none'; }, 3000);
         }
 
-        async function syncAndPrintExactNote() {
+        // SYNC TO SHEET AND DOWNLOAD PNG AUTOMATICALLY
+        async function syncAndDownloadPNG() {
             statusMsg.className = 'status-msg status-loading';
-            statusMsg.innerText = 'গুগল শিটে ৬ কলাম অনুযায়ী সেভ হচ্ছে...';
+            statusMsg.innerText = 'গুগল শিটে ডেটা সেভ ও PNG ডাউনলোড হচ্ছে...';
 
             const payload = new URLSearchParams({
                 'voucherId': serialInput.value,     // Column A
@@ -557,6 +540,7 @@
             });
 
             try {
+                // Background fetch to Google Sheet
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -564,19 +548,22 @@
                     body: payload
                 });
 
+                // Trigger PNG Download
+                downloadCanvasAsPNG();
+
                 statusMsg.className = 'status-msg status-success';
-                statusMsg.innerText = 'শিটে সফলভাবে সেভ হয়েছে! প্রিন্ট করা হচ্ছে...';
+                statusMsg.innerText = 'শিটে সফলভাবে সেভ হয়েছে এবং PNG ডাউনলোড করা হয়েছে!';
 
                 setTimeout(() => {
-                    window.print();
                     generateNewSerial();
-                }, 400);
+                }, 500);
 
             } catch (err) {
                 console.error(err);
+                // Even if sheet fetch fails due to CORS/network, still fallback to downloading PNG
+                downloadCanvasAsPNG();
                 statusMsg.className = 'status-msg status-success';
-                statusMsg.innerText = 'প্রিন্ট উইন্ডো খোলা হচ্ছে...';
-                window.print();
+                statusMsg.innerText = 'PNG ডাউনলোড সম্পন্ন হয়েছে!';
             }
         }
 
